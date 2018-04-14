@@ -1,0 +1,61 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 27
+
+    defaultConfig {
+        applicationId "cn.ittiger.im"
+        minSdkVersion 14
+        targetSdkVersion 21
+        versionCode 2
+        versionName "2.0"
+        vectorDrawables.useSupportLibrary = true
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    testImplementation 'junit:junit:4.12'
+    implementation project(':TigerLibrary')
+    implementation 'com.android.support:design:27.1.1'
+    implementation 'com.android.support:cardview-v7:27.1.1'
+    implementation 'cn.ittiger:indexstickyview:1.1.0'
+
+    //smack-core为核心库
+    def smackVersion = '4.2.3'
+    implementation "org.igniterealtime.smack:smack-core:${smackVersion}"
+    //Smack IM.Classes and methods for XMPP-IM (RFC 6121): Roster, Chat and other functionality
+    implementation "org.igniterealtime.smack:smack-im:${smackVersion}"
+
+    //Smack for Android. All the required dependencies to run Smack on Android.
+    //smack-android依赖smack-extensions和smack-experimental和smack-tcp
+    implementation "org.igniterealtime.smack:smack-android:${smackVersion}"
+    implementation "org.igniterealtime.smack:smack-android-extensions:${smackVersion}"
+    //XMPP connections
+    implementation "org.igniterealtime.smack:smack-tcp:${smackVersion}"
+    //support for the various XMPP XEPs (Multi-User Chat, PubSub, …) and other XMPP extensions.
+    implementation "org.igniterealtime.smack:smack-extensions:${smackVersion}"
+    implementation "org.igniterealtime.smack:smack-experimental:${smackVersion}"
+
+    //UIL
+    implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
+    //Logger
+    implementation 'com.orhanobut:logger:1.15'
+
+    //butterknife
+    implementation 'com.jakewharton:butterknife:8.8.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
+
+    //rxjava
+    implementation 'io.reactivex:rxjava:1.1.6'
+    implementation 'io.reactivex:rxandroid:1.2.1'
+
+    //eventbus
+    implementation 'org.greenrobot:eventbus:3.0.0'
+}
