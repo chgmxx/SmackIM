@@ -27,12 +27,6 @@ uses-sdk
 INJECTED from /Users/su/Documents/git/TigerIM/SmackLibrary/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /Users/su/Documents/git/TigerIM/SmackLibrary/src/main/AndroidManifest.xml
 INJECTED from /Users/su/Documents/git/TigerIM/SmackLibrary/src/main/AndroidManifest.xml
-INJECTED from /Users/su/Documents/git/TigerIM/SmackLibrary/src/main/AndroidManifest.xml
-INJECTED from /Users/su/Documents/git/TigerIM/SmackLibrary/src/main/AndroidManifest.xml
-	android:targetSdkVersion
-		INJECTED from /Users/su/Documents/git/TigerIM/SmackLibrary/src/main/AndroidManifest.xml
-		ADDED from /Users/su/Documents/git/TigerIM/SmackLibrary/src/main/AndroidManifest.xml
-		INJECTED from /Users/su/Documents/git/TigerIM/SmackLibrary/src/main/AndroidManifest.xml
 	android:minSdkVersion
 		INJECTED from /Users/su/Documents/git/TigerIM/SmackLibrary/src/main/AndroidManifest.xml
 		ADDED from /Users/su/Documents/git/TigerIM/SmackLibrary/src/main/AndroidManifest.xml

@@ -6,6 +6,7 @@ android {
     defaultConfig {
         applicationId "cn.ittiger.im"
         minSdkVersion 14
+        //noinspection OldTargetApi
         targetSdkVersion 21
         versionCode 2
         versionName "2.0"
@@ -17,12 +18,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    lintOptions {
+        checkReleaseBuilds false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError false
+    }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     testImplementation 'junit:junit:4.12'
-    implementation project(':TigerLibrary')
+    implementation project(':SmackLibrary')
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.android.support:cardview-v7:27.1.1'
     implementation 'cn.ittiger:indexstickyview:1.1.0'
