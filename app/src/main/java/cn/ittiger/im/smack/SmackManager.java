@@ -1,5 +1,7 @@
 package cn.ittiger.im.smack;
 
+import android.util.Log;
+
 import cn.ittiger.im.bean.LoginResult;
 import cn.ittiger.im.bean.User;
 import cn.ittiger.im.constant.Constant;
@@ -7,31 +9,39 @@ import cn.ittiger.im.constant.Constant;
 import com.orhanobut.logger.Logger;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jivesoftware.smack.AbstractXMPPConnection;
+import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.ReconnectionManager;
 import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.SmackException.NoResponseException;
 import org.jivesoftware.smack.SmackException.NotConnectedException;
 import org.jivesoftware.smack.SmackException.NotLoggedInException;
+import org.jivesoftware.smack.StanzaCollector;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.chat.Chat;
 import org.jivesoftware.smack.chat.ChatManager;
+import org.jivesoftware.smack.filter.StanzaIdFilter;
+import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.filetransfer.FileTransferListener;
 import org.jivesoftware.smackx.filetransfer.FileTransferManager;
 import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
 import org.jivesoftware.smackx.iqregister.AccountManager;
+import org.jivesoftware.smackx.iqregister.packet.Registration;
 import org.jivesoftware.smackx.muc.DiscussionHistory;
 import org.jivesoftware.smackx.muc.HostedRoom;
 import org.jivesoftware.smackx.muc.MultiUserChat;
@@ -40,26 +50,30 @@ import org.jivesoftware.smackx.muc.RoomInfo;
 import org.jivesoftware.smackx.xdata.Form;
 import org.jivesoftware.smackx.xdata.FormField;
 import org.jxmpp.jid.DomainBareJid;
+import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.impl.DomainpartJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.jid.parts.Resourcepart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+
 public class SmackManager {
     private static final String TAG = "SmackManager";
     /**
      * Xmpp服务器地址
      */
-    public static final String SERVER_IP = "47.97.118.48";
+    public static final String SERVER_IP = "192.168.0.104";
     /**
      * Xmpp 服务器端口
      */
-    private static final int PORT = 9090;
+    private static final int PORT = 5222;
     /**
      * 服务器名称
      */
-    public static final String SERVER_NAME = "47.97.118.48";
+    public static final String SERVER_NAME = "windows";
     /**
      *
      */
@@ -72,7 +86,7 @@ public class SmackManager {
     private XMPPTCPConnection mConnection;
 
     private SmackManager() {
-
+        AccountManager.sensitiveOperationOverInsecureConnectionDefault(true);
         this.mConnection = connect();
     }
 
@@ -101,24 +115,30 @@ public class SmackManager {
     private XMPPTCPConnection connect() {
 
         try {
-            SmackConfiguration.setDefaultPacketReplyTimeout(10000);
+            InetAddress addr = InetAddress.getByName(SERVER_IP);
+            HostnameVerifier verifier = new HostnameVerifier() {
+                @Override
+                public boolean verify(String hostname, SSLSession session) {
+                    return false;
+                }
+            };
+            DomainBareJid serviceName = JidCreate.domainBareFrom(SERVER_NAME);
             XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
-                    //是否开启安全模式
-                    .setSecurityMode(XMPPTCPConnectionConfiguration.SecurityMode.disabled)
-                    //服务器名称
-                    .setServiceName(JidCreate.domainBareFrom(SERVER_NAME))
-                    .setHost(SERVER_IP)//服务器IP地址
-                    //服务器端口
-                    .setPort(PORT)
-                    //是否开启压缩
-                    .setCompressionEnabled(false)
-                    //开启调试模式
-                    .setDebuggerEnabled(true).build();
+                    .setXmppDomain(serviceName)
+                    .setHost(SERVER_IP) // it will be resolved by setHostAddress method
+                    .setPort(5222)
+                    .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
+                    .setCompressionEnabled(false) // 禁用SSL连接
+                    .setHostnameVerifier(verifier)
+                    .setHostAddress(addr)
+                    .setDebuggerEnabled(true)
+                    .build();
 
             XMPPTCPConnection connection = new XMPPTCPConnection(config);
             ReconnectionManager reconnectionManager = ReconnectionManager.getInstanceFor(connection);
             reconnectionManager.enableAutomaticReconnection();//允许自动重连
             reconnectionManager.setFixedDelay(2);//重连间隔时间
+            // Connect to the server
             connection.addConnectionListener(new SmackConnectionListener());//连接监听
             connection.connect();
             return connection;
@@ -218,6 +238,37 @@ public class SmackManager {
             Logger.e(TAG, "register failure", e);
             return false;
         }
+    }
+
+    /**
+     * 创建用户
+     *
+     * @param userName   用户名
+     * @param passWord   密码
+     * @param attributes 属性
+     */
+    public void createAccount(String userName, String passWord, Map<String, String> attributes)
+            throws SmackException.NotConnectedException, InterruptedException,
+            XMPPException.XMPPErrorException, SmackException.NoResponseException {
+        if (StringUtils.isNullOrEmpty(userName)) {
+            throw new IllegalArgumentException("Username must not be null");
+        }
+        if (StringUtils.isNullOrEmpty(passWord)) {
+            throw new IllegalArgumentException("Password must not be null");
+        }
+
+        attributes.put("username", userName); // 设置用户名
+        attributes.put("password", passWord); // 设置密码
+        Registration reg = new Registration(attributes);
+        reg.setType(IQ.Type.set); // 设置类型
+        reg.setTo(mConnection.getXMPPServiceDomain());// 设置发送地址
+        createStanzaCollectorAndSend(reg).nextResultOrThrow();
+    }
+
+    private StanzaCollector createStanzaCollectorAndSend(IQ req) throws
+            SmackException.NotConnectedException, InterruptedException {
+        StanzaCollector collector = mConnection.createStanzaCollectorAndSend(new StanzaIdFilter(req.getStanzaId()), req);
+        return collector;
     }
 
     /**
@@ -665,51 +716,51 @@ public class SmackManager {
         }
         MultiUserChat muc = getMultiChat(getMultiChatJid(roomName));
         // 创建聊天室
-        boolean isCreated = muc.createOrJoin(Resourcepart.from(nickName));
-        if (isCreated) {
-            // 获得聊天室的配置表单
-            Form form = muc.getConfigurationForm();
-            // 根据原始表单创建一个要提交的新表单。
-            Form submitForm = form.createAnswerForm();
-            // 向要提交的表单添加默认答复
-            List<FormField> fields = form.getFields();
-            for (int i = 0; fields != null && i < fields.size(); i++) {
-                if (FormField.Type.hidden != fields.get(i).getType() && fields.get(i).getVariable() != null) {
-                    // 设置默认值作为答复
-                    submitForm.setDefaultAnswer(fields.get(i).getVariable());
-                }
+        muc.createOrJoin(Resourcepart.from(nickName)).makeInstant();
+//        if (isCreated) {
+        // 获得聊天室的配置表单
+        Form form = muc.getConfigurationForm();
+        // 根据原始表单创建一个要提交的新表单。
+        Form submitForm = form.createAnswerForm();
+        // 向要提交的表单添加默认答复
+        List<FormField> fields = form.getFields();
+        for (int i = 0; fields != null && i < fields.size(); i++) {
+            if (FormField.Type.hidden != fields.get(i).getType() && fields.get(i).getVariable() != null) {
+                // 设置默认值作为答复
+                submitForm.setDefaultAnswer(fields.get(i).getVariable());
             }
-            // 设置聊天室的新拥有者
-            List<String> owners = new ArrayList<String>();
-            owners.add(mConnection.getUser().asEntityBareJidString());// 用户JID
-            submitForm.setAnswer("muc#roomconfig_roomowners", owners);
-            // 设置聊天室是持久聊天室，即将要被保存下来
-            submitForm.setAnswer("muc#roomconfig_persistentroom", true);
-            // 房间仅对成员开放
-            submitForm.setAnswer("muc#roomconfig_membersonly", false);
-            // 允许占有者邀请其他人
-            submitForm.setAnswer("muc#roomconfig_allowinvites", true);
-            if (password != null && password.length() != 0) {
-                // 进入是否需要密码
-                submitForm.setAnswer("muc#roomconfig_passwordprotectedroom", true);
-                // 设置进入密码
-                submitForm.setAnswer("muc#roomconfig_roomsecret", password);
-            }
-            //不限制房间成员数
-            List<String> list = new ArrayList<String>();
-            list.add("0");
-            submitForm.setAnswer("muc#roomconfig_maxusers", list);
-            // 登录房间对话
-            submitForm.setAnswer("muc#roomconfig_enablelogging", true);
-            // 仅允许注册的昵称登录
-            submitForm.setAnswer("x-muc#roomconfig_reservednick", true);
-            // 允许使用者修改昵称
-            submitForm.setAnswer("x-muc#roomconfig_canchangenick", false);
-            // 允许用户注册房间
-            submitForm.setAnswer("x-muc#roomconfig_registration", false);
-            // 发送已完成的表单（有默认值）到服务器来配置聊天室
-            muc.sendConfigurationForm(submitForm);
         }
+        // 设置聊天室的新拥有者
+        List<String> owners = new ArrayList<String>();
+        owners.add(mConnection.getUser().asEntityBareJidString());// 用户JID
+        submitForm.setAnswer("muc#roomconfig_roomowners", owners);
+        // 设置聊天室是持久聊天室，即将要被保存下来
+        submitForm.setAnswer("muc#roomconfig_persistentroom", true);
+        // 房间仅对成员开放
+        submitForm.setAnswer("muc#roomconfig_membersonly", false);
+        // 允许占有者邀请其他人
+        submitForm.setAnswer("muc#roomconfig_allowinvites", true);
+        if (password != null && password.length() != 0) {
+            // 进入是否需要密码
+            submitForm.setAnswer("muc#roomconfig_passwordprotectedroom", true);
+            // 设置进入密码
+            submitForm.setAnswer("muc#roomconfig_roomsecret", password);
+        }
+        //不限制房间成员数
+        List<String> list = new ArrayList<String>();
+        list.add("0");
+        submitForm.setAnswer("muc#roomconfig_maxusers", list);
+        // 登录房间对话
+        submitForm.setAnswer("muc#roomconfig_enablelogging", true);
+        // 仅允许注册的昵称登录
+        submitForm.setAnswer("x-muc#roomconfig_reservednick", true);
+        // 允许使用者修改昵称
+        submitForm.setAnswer("x-muc#roomconfig_canchangenick", false);
+        // 允许用户注册房间
+        submitForm.setAnswer("x-muc#roomconfig_registration", false);
+        // 发送已完成的表单（有默认值）到服务器来配置聊天室
+        muc.sendConfigurationForm(submitForm);
+//        }
         return muc;
     }
 
@@ -776,7 +827,10 @@ public class SmackManager {
         if (!isConnected()) {
             throw new NullPointerException("服务器连接失败，请先连接服务器");
         }
-        return getMultiUserChatManager().getHostedRooms(mConnection.getServiceName());
+
+        MultiUserChatManager manager = getMultiUserChatManager();
+        DomainBareJid jid = manager.getXMPPServiceDomains().get(0);
+        return manager.getHostedRooms(jid);
     }
 
     public ServiceDiscoveryManager getServiceDiscoveryManager() {

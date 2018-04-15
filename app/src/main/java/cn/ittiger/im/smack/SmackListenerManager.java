@@ -89,7 +89,7 @@ public class SmackListenerManager {
         if(multiUserChat == null) {
             return;
         }
-        getInstance().mMultiUserChatHashMap.put(multiUserChat.getRoom(), multiUserChat);
+        getInstance().mMultiUserChatHashMap.put(multiUserChat.getRoom().asEntityBareJidString(), multiUserChat);
         multiUserChat.addMessageListener(getInstance().mMultiChatMessageListener);
     }
 

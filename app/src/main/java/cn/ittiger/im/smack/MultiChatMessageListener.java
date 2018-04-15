@@ -30,8 +30,8 @@ public class MultiChatMessageListener implements MessageListener {
 
         //不会收到自己发送过来的消息
         Logger.d(message.toString());
-        String from = message.getFrom();//消息发送人，格式:老胡创建的群@conference.121.42.13.79/老胡     --> 老胡发送的
-        String to = message.getTo();//消息接收人(当前登陆用户)，格式:zhangsan@121.42.13.79/Smack
+        String from = message.getFrom().toString();//消息发送人，格式:老胡创建的群@conference.121.42.13.79/老胡     --> 老胡发送的
+        String to = message.getTo().toString();//消息接收人(当前登陆用户)，格式:zhangsan@121.42.13.79/Smack
         Matcher matcherTo = Pattern.compile(PATTERN).matcher(to);
 
         if(matcherTo.find()) {

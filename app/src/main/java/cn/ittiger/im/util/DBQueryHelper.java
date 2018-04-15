@@ -38,7 +38,7 @@ public class DBQueryHelper {
      */
     public static ChatUser queryChatUser(MultiUserChat multiUserChat) {
 
-        String friendUserName = multiUserChat.getRoom();
+        String friendUserName = multiUserChat.getRoom().asEntityBareJidString();
         int idx = friendUserName.indexOf(Constant.MULTI_CHAT_ADDRESS_SPLIT);
         String friendNickName = friendUserName.substring(0, idx);
         String whereClause = "meUserName=? and friendUserName=? and isMulti=?";

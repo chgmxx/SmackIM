@@ -98,34 +98,34 @@ public class RegisterActivity extends IMBaseActivity {
     public void onRegisterOk(View v) {
 
         final String username = mUserEditText.getText().toString();
-        Pattern pattern = Pattern.compile("^[a-zA-Z0-9_]{3,16}$");//a-z,A-Z,0-9,_,3～16位
-        if(!pattern.matcher(username).matches()) {
-            mUserTextInput.setError(getString(R.string.error_register_input_username_invalid));
-            return;
-        }
+//        Pattern pattern = Pattern.compile("^[a-zA-Z0-9_]{3,16}$");//a-z,A-Z,0-9,_,3～16位
+//        if(!pattern.matcher(username).matches()) {
+//            mUserTextInput.setError(getString(R.string.error_register_input_username_invalid));
+//            return;
+//        }
         final String nickname = mNicknameEditText.getText().toString();
-        if (ValueUtil.isEmpty(nickname)) {
-            mNicknameTextInput.setError(getString(R.string.error_register_input_nickname));
-            return;
-        }
+//        if (ValueUtil.isEmpty(nickname)) {
+//            mNicknameTextInput.setError(getString(R.string.error_register_input_nickname));
+//            return;
+//        }
         String password = mPasswordEditText.getText().toString();
-        pattern = Pattern.compile("^[a-zA-Z0-9]{6,18}$");//a-z,A-Z,0-9,_,3～16位
-        if(!pattern.matcher(password).matches()) {
-            mPasswordTextInput.setError(getString(R.string.error_register_input_password_invalid));
-            mPasswordEditText.setText("");
-            return;
-        }
+//        pattern = Pattern.compile("^[a-zA-Z0-9]{6,18}$");//a-z,A-Z,0-9,_,3～16位
+//        if(!pattern.matcher(password).matches()) {
+//            mPasswordTextInput.setError(getString(R.string.error_register_input_password_invalid));
+//            mPasswordEditText.setText("");
+//            return;
+//        }
         final String repassword = mRePasswordEditText.getText().toString();
-        if(!pattern.matcher(password).matches()) {
-            mRePasswordTextInput.setError(getString(R.string.error_register_input_password_invalid));
-            mRePasswordEditText.setText("");
-            return;
-        }
-        if (!password.equals(repassword)) {
-            mRePasswordTextInput.setError(getString(R.string.error_register_input_password_not_equal));
-            mRePasswordEditText.setText("");
-            return;
-        }
+//        if(!pattern.matcher(password).matches()) {
+//            mRePasswordTextInput.setError(getString(R.string.error_register_input_password_invalid));
+//            mRePasswordEditText.setText("");
+//            return;
+//        }
+//        if (!password.equals(repassword)) {
+//            mRePasswordTextInput.setError(getString(R.string.error_register_input_password_not_equal));
+//            mRePasswordEditText.setText("");
+//            return;
+//        }
         register(username, nickname, repassword);
     }
 
@@ -140,7 +140,7 @@ public class RegisterActivity extends IMBaseActivity {
                 @Override
                 public Boolean call(Map<String, String> attribute) {
 
-                    return SmackManager.getInstance().registerUser(username, password, attribute);
+                    return SmackManager.getInstance().registerUser(username, password, attributes);
                 }
             })
             .observeOn(AndroidSchedulers.mainThread())

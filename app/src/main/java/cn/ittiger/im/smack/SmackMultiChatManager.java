@@ -15,6 +15,7 @@ import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.disco.packet.DiscoverItems;
 import org.jivesoftware.smackx.muc.HostedRoom;
 import org.jivesoftware.smackx.muc.MultiUserChat;
+import org.jxmpp.jid.parts.Resourcepart;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class SmackMultiChatManager {
 
     public static void saveMultiChat(MultiUserChat multiUserChat) {
 
-        DBHelper.getInstance().getSQLiteDB().save(new MultiChatRoom(multiUserChat.getRoom()));
+        DBHelper.getInstance().getSQLiteDB().save(new MultiChatRoom(multiUserChat.getRoom().asEntityBareJidString()));
     }
 
     public static void bindJoinMultiChat() {
@@ -79,7 +80,7 @@ public class SmackMultiChatManager {
                                 if(idx != -1) {
                                     try {
                                         MultiUserChat multiUserChat = SmackManager.getInstance().getMultiChat(chatRoom.getRoomJid());
-                                        multiUserChat.join(LoginHelper.getUser().getNickname());
+                                        multiUserChat.join(Resourcepart.from(LoginHelper.getUser().getNickname()));
                                         SmackListenerManager.addMultiChatMessageListener(multiUserChat);
                                     } catch (Exception e) {
                                         Logger.e(e, "join room %s failure", room.getName());

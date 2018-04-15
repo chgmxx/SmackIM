@@ -26,6 +26,7 @@ import com.orhanobut.logger.Logger;
 
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smackx.muc.MultiUserChat;
+import org.jxmpp.jid.impl.JidCreate;
 
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -184,7 +185,7 @@ public class CreateMultiChatActivity extends IMBaseActivity
             MultiUserChat multiUserChat = SmackManager.getInstance().createChatRoom(chatRoomName, meNickName, null);
             for(CheckableContactEntity entity : mCheckList) {
                 String jid = SmackManager.getInstance().getFullJid(entity.getRosterEntry().getUser());
-                multiUserChat.invite(jid, reason);//邀请入群
+                multiUserChat.invite(JidCreate.entityBareFrom(jid), reason);//邀请入群
             }
             SmackListenerManager.addMultiChatMessageListener(multiUserChat);
             SmackMultiChatManager.saveMultiChat(multiUserChat);

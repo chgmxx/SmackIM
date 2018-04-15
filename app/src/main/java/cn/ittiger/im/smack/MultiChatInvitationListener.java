@@ -11,6 +11,9 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smackx.muc.InvitationListener;
 import org.jivesoftware.smackx.muc.MultiUserChat;
+import org.jivesoftware.smackx.muc.packet.MUCUser;
+import org.jxmpp.jid.EntityJid;
+import org.jxmpp.jid.parts.Resourcepart;
 
 /**
  * 多人聊天邀请监听
@@ -20,15 +23,13 @@ import org.jivesoftware.smackx.muc.MultiUserChat;
 public class MultiChatInvitationListener implements InvitationListener {
 
     @Override
-    public void invitationReceived(XMPPConnection conn, MultiUserChat room, String inviter,
-                                   String reason, String password, Message message) {
-
+    public void invitationReceived(XMPPConnection conn, MultiUserChat room, EntityJid inviter, String reason, String password, Message message, MUCUser.Invite invitation) {
         try {
-            room.join(LoginHelper.getUser().getNickname());
+            room.join(Resourcepart.from(LoginHelper.getUser().getNickname()));
             SmackMultiChatManager.saveMultiChat(room);
             SmackListenerManager.addMultiChatMessageListener(room);
 
-            String friendUserName = room.getRoom();
+            String friendUserName = room.getRoom().asEntityBareJidString();
             int idx = friendUserName.indexOf(Constant.MULTI_CHAT_ADDRESS_SPLIT);
             String friendNickName = friendUserName.substring(0, idx);
             ChatUser chatUser = new ChatUser(friendUserName, friendNickName, true);
