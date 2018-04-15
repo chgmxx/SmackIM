@@ -28,7 +28,7 @@ dependencies {
     implementation 'cn.ittiger:indexstickyview:1.1.0'
 
     //smack-core为核心库
-    def smackVersion = '4.1.9'
+    def smackVersion = '4.2.3'
     implementation "org.igniterealtime.smack:smack-core:${smackVersion}"
     //Smack IM.Classes and methods for XMPP-IM (RFC 6121): Roster, Chat and other functionality
     implementation "org.igniterealtime.smack:smack-im:${smackVersion}"

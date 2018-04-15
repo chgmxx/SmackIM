@@ -39,21 +39,27 @@ import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.muc.RoomInfo;
 import org.jivesoftware.smackx.xdata.Form;
 import org.jivesoftware.smackx.xdata.FormField;
+import org.jxmpp.jid.DomainBareJid;
+import org.jxmpp.jid.impl.DomainpartJid;
+import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.jid.parts.Localpart;
+import org.jxmpp.jid.parts.Resourcepart;
+import org.jxmpp.stringprep.XmppStringprepException;
 
 public class SmackManager {
     private static final String TAG = "SmackManager";
     /**
      * Xmpp服务器地址
      */
-    public static final String SERVER_IP = "121.42.13.79";
+    public static final String SERVER_IP = "47.97.118.48";
     /**
      * Xmpp 服务器端口
      */
-    private static final int PORT = 5222;
+    private static final int PORT = 9090;
     /**
      * 服务器名称
      */
-    public static final String SERVER_NAME = "121.42.13.79";
+    public static final String SERVER_NAME = "47.97.118.48";
     /**
      *
      */
@@ -100,7 +106,7 @@ public class SmackManager {
                     //是否开启安全模式
                     .setSecurityMode(XMPPTCPConnectionConfiguration.SecurityMode.disabled)
                     //服务器名称
-                    .setServiceName(SERVER_NAME)
+                    .setServiceName(JidCreate.domainBareFrom(SERVER_NAME))
                     .setHost(SERVER_IP)//服务器IP地址
                     //服务器端口
                     .setPort(PORT)
@@ -124,8 +130,8 @@ public class SmackManager {
     /**
      * 登陆
      *
-     * @param username     用户账号
-     * @param password     用户密码
+     * @param username 用户账号
+     * @param password 用户密码
      * @return
      * @throws Exception
      */
@@ -186,7 +192,7 @@ public class SmackManager {
             AccountManager.getInstance(mConnection).deleteAccount();//删除该账号
             return true;
         } catch (NoResponseException | XMPPErrorException
-                | NotConnectedException e) {
+                | NotConnectedException | InterruptedException e) {
             return false;
         }
     }
@@ -205,10 +211,10 @@ public class SmackManager {
             return false;
         }
         try {
-            AccountManager.getInstance(mConnection).createAccount(username, password, attributes);
+            AccountManager.getInstance(mConnection).createAccount(Localpart.from(username), password, attributes);
             return true;
         } catch (NoResponseException | XMPPErrorException
-                | NotConnectedException e) {
+                | NotConnectedException | InterruptedException | XmppStringprepException e) {
             Logger.e(TAG, "register failure", e);
             return false;
         }
@@ -228,7 +234,7 @@ public class SmackManager {
         try {
             AccountManager.getInstance(mConnection).changePassword(newpassword);
             return true;
-        } catch (NoResponseException | XMPPErrorException | NotConnectedException e) {
+        } catch (NoResponseException | XMPPErrorException | NotConnectedException | InterruptedException e) {
             Logger.e(TAG, "change password failure", e);
             return false;
         }
@@ -307,7 +313,7 @@ public class SmackManager {
                     break;
             }
             return true;
-        } catch (NotConnectedException e) {
+        } catch (NotConnectedException | InterruptedException e) {
             e.printStackTrace();
         }
         return false;
@@ -323,14 +329,14 @@ public class SmackManager {
         if (mConnection == null) {
             sSmackManager = new SmackManager();
         }
-        if(mConnection == null) {
+        if (mConnection == null) {
             return false;
         }
         if (!mConnection.isConnected()) {
             try {
                 mConnection.connect();
                 return true;
-            } catch (SmackException | IOException | XMPPException e) {
+            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
                 return false;
             }
         }
@@ -379,9 +385,13 @@ public class SmackManager {
      */
     public Chat createChat(String jid) {
 
-        if (isConnected()) {
-            ChatManager chatManager = ChatManager.getInstanceFor(mConnection);
-            return chatManager.createChat(jid);
+        try {
+            if (isConnected()) {
+                ChatManager chatManager = ChatManager.getInstanceFor(mConnection);
+                return chatManager.createChat(JidCreate.entityBareFrom(jid));
+            }
+        } catch (XmppStringprepException e) {
+            e.printStackTrace();
         }
         throw new NullPointerException("服务器连接失败，请先连接服务器");
     }
@@ -420,9 +430,12 @@ public class SmackManager {
      * @return
      */
     public RosterEntry getFriend(String user) {
-
-        if (isConnected()) {
-            return Roster.getInstanceFor(mConnection).getEntry(user);
+        try {
+            if (isConnected()) {
+                return Roster.getInstanceFor(mConnection).getEntry(JidCreate.bareFrom(user));
+            }
+        } catch (XmppStringprepException e) {
+            e.printStackTrace();
         }
         throw new NullPointerException("服务器连接失败，请先连接服务器");
     }
@@ -439,10 +452,11 @@ public class SmackManager {
 
         if (isConnected()) {
             try {
-                Roster.getInstanceFor(mConnection).createEntry(user, nickName, new String[]{groupName});
+                Roster.getInstanceFor(mConnection).createEntry(JidCreate.bareFrom(user), nickName, new String[]{groupName});
                 return true;
             } catch (NotLoggedInException | NoResponseException
-                    | XMPPErrorException | NotConnectedException e) {
+                    | XMPPErrorException | NotConnectedException
+                    | InterruptedException | XmppStringprepException e) {
                 return false;
             }
         }
@@ -497,8 +511,12 @@ public class SmackManager {
      */
     public OutgoingFileTransfer getSendFileTransfer(String jid) {
 
-        if (isConnected()) {
-            return FileTransferManager.getInstanceFor(mConnection).createOutgoingFileTransfer(jid);
+        try {
+            if (isConnected()) {
+                return FileTransferManager.getInstanceFor(mConnection).createOutgoingFileTransfer(JidCreate.entityFullFrom(jid));
+            }
+        } catch (XmppStringprepException e) {
+            e.printStackTrace();
         }
         throw new NullPointerException("服务器连接失败，请先连接服务器");
     }
@@ -647,7 +665,7 @@ public class SmackManager {
         }
         MultiUserChat muc = getMultiChat(getMultiChatJid(roomName));
         // 创建聊天室
-        boolean isCreated = muc.createOrJoin(nickName);
+        boolean isCreated = muc.createOrJoin(Resourcepart.from(nickName));
         if (isCreated) {
             // 获得聊天室的配置表单
             Form form = muc.getConfigurationForm();
@@ -663,7 +681,7 @@ public class SmackManager {
             }
             // 设置聊天室的新拥有者
             List<String> owners = new ArrayList<String>();
-            owners.add(mConnection.getUser());// 用户JID
+            owners.add(mConnection.getUser().asEntityBareJidString());// 用户JID
             submitForm.setAnswer("muc#roomconfig_roomowners", owners);
             // 设置聊天室是持久聊天室，即将要被保存下来
             submitForm.setAnswer("muc#roomconfig_persistentroom", true);
@@ -709,16 +727,16 @@ public class SmackManager {
             throw new NullPointerException("服务器连接失败，请先连接服务器");
         }
         try {
-            // 使用XMPPConnection创建一个MultiUserChat窗口  
+            // 使用XMPPConnection创建一个MultiUserChat窗口
             MultiUserChat muc = getMultiChat(getMultiChatJid(roomName));
-            // 聊天室服务将会决定要接受的历史记录数量  
+            // 聊天室服务将会决定要接受的历史记录数量
             DiscussionHistory history = new DiscussionHistory();
             history.setMaxChars(0);
-            // history.setSince(new Date());  
-            // 用户加入聊天室  
-            muc.join(nickName, password);
+            // history.setSince(new Date());
+            // 用户加入聊天室
+            muc.join(Resourcepart.from(nickName), password);
             return muc;
-        } catch (XMPPException | SmackException e) {
+        } catch (XMPPException | SmackException | InterruptedException | XmppStringprepException e) {
             e.printStackTrace();
             return null;
         }
@@ -731,7 +749,12 @@ public class SmackManager {
 
     public MultiUserChat getMultiChat(String roomJid) {
 
-        return getMultiUserChatManager().getMultiUserChat(roomJid);
+        try {
+            return getMultiUserChatManager().getMultiUserChat(JidCreate.entityBareFrom(roomJid));
+        } catch (XmppStringprepException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public MultiUserChatManager getMultiUserChatManager() {
